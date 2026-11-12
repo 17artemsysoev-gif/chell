@@ -23,7 +23,7 @@ namespace ConsoleApp1
         public Drone(string model) : this(model, 100)
         {
         }
-
+        public Drone() { }
         // Метод для вывода информации о дроне
         public void PrintInfo()
         {

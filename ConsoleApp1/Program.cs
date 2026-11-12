@@ -1,81 +1,100 @@
 ﻿using System;
+using System.IO;
+using System.Text.Json;
 
 namespace ConsoleApp1
 {
     class Program
     {
+        const string FileName = "drones.json";
+
         static void Main(string[] args)
         {
-
-            Console.WriteLine("******************************************");
-            Console.WriteLine("*** Система управления БПЛА (версия 2.0) ***");
-            Console.WriteLine("******************************************");
-
-
-            // Задание 1 & 3: Массив объектов и использование разных конструкторов
             Drone[] drones = new Drone[]
             {
                 new Drone("DJI Mini 3", 85),
-                new Drone("Autel EVO Lite+", 15), // Дрон с низким зарядом для проверки условий
-                new Drone("Parrot Anafi")         // Использует конструктор по умолчанию (заряд 100%)
+                new Drone("Autel EVO Lite+", 15),
+                new Drone("Parrot Anafi")
             };
 
-            // Вывод информации о каждом дроне и проверка условий заряда (Задание 1 и 2)
-            Console.WriteLine("\n--- Список зарегистрированных БПЛА ---");
-            foreach (Drone drone in drones)
+            while (true)
             {
-                drone.PrintInfo();
-                if (drone.IsEngineOn)
+                Console.WriteLine("\n*******************************************");
+                Console.WriteLine("*** Система управления БПЛА (версия 3.0) ***");
+                Console.WriteLine("*******************************************");
+                Console.WriteLine("1. Показать информацию о всех дронах");
+                Console.WriteLine("2. Взлёт выбранного дрона");
+                Console.WriteLine("3. Подзарядка выбранного дрона");
+                Console.WriteLine("4. Расчёт времени полёта");
+                Console.WriteLine("5. Сохранить состояние в файл");
+                Console.WriteLine("6. Загрузить состояние из файла");
+                Console.WriteLine("0. Выход");
+                Console.Write("Выберите действие: ");
+
+                string? choice = Console.ReadLine();
+
+                if (choice == "0")
                 {
-                    Console.WriteLine($"Оставшееся время полёта: {drone.CalculateFlightTime()} мин.");
+                    Console.WriteLine("Программа завершена.");
+                    break;
                 }
-
-
-
-
-                // Проверка заряда (Задание 1, пункт 4)
-                if (drone.BatteryLevel < 20)
-                {
-                    Console.WriteLine($"[ПРЕДУПРЕЖДЕНИЕ]: У дрона {drone.Model} низкий уровень заряда!");
-
-                    // Предложение подзарядки (Задание 2, пункт 3)
-                    Console.WriteLine("Выполняется автоматическая подзарядка...");
-                    drone.ChargeBattery(50);
-                    Console.WriteLine();
-                }
-            }
-
-            // Интерактивное тестирование первого дрона из списка
-            if (drones.Length > 0)
-            {
-                Drone myDrone = drones[0];
-                Console.WriteLine($"\n--- Управление выбранным дроном [{myDrone.Model}] ---");
 
                 try
                 {
-                    int command = -1;
-                    while (command != 0)
+                    switch (choice)
                     {
-                        Console.Write("Введите команду (1 - взлет, 2 - расчёт времени, 0 - выход): ");
-                        string input = Console.ReadLine();
-                        if (!int.TryParse(input, out command))
-                        {
-                            Console.WriteLine("Ошибка: введите число.");
-                            continue;
-                        }
+                        case "1":
+                            Console.WriteLine("\n--- Список зарегистрированных БПЛА ---");
+                            for (int i = 0; i < drones.Length; i++)
+                            {
+                                Console.Write($"[{i}] ");
+                                drones[i].PrintInfo();
+                            }
+                            break;
 
-                        if (command == 1)
-                        {
-                            myDrone.TakeOff();
-                        }
-                        else if (command == 2)
-                        {
-                            Console.WriteLine($"Время полёта: {myDrone.CalculateFlightTime()} мин.");
-                        }
-                        else if (command != 0)
-                        {
-                            Console.WriteLine("Неизвестная команда.");
-                        }
+                        case "2":
+                            int takeOffIndex = SelectDroneIndex(drones);
+                            if (takeOffIndex != -1)
+                            {
+                                drones[takeOffIndex].TakeOff();
+                            }
+                            break;
+
+                        case "3":
+                            int chargeIndex = SelectDroneIndex(drones);
+                            if (chargeIndex != -1)
+                            {
+                                Console.Write("Введите процент заряда: ");
+                                if (int.TryParse(Console.ReadLine(), out int amount))
+                                {
+                                    drones[chargeIndex].ChargeBattery(amount);
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Ошибка: введите целое число.");
+                                }
+                            }
+                            break;
+
+                        case "4":
+                            int timeIndex = SelectDroneIndex(drones);
+                            if (timeIndex != -1)
+                            {
+                                Console.WriteLine($"Оставшееся время полёта: {drones[timeIndex].CalculateFlightTime()} мин.");
+                            }
+                            break;
+
+                        case "5":
+                            SaveDrones(drones, FileName);
+                            break;
+
+                        case "6":
+                            drones = LoadDrones(FileName);
+                            break;
+
+                        default:
+                            Console.WriteLine("Неизвестная команда. Попробуйте снова.");
+                            break;
                     }
                 }
                 catch (Exception ex)
@@ -83,8 +102,48 @@ namespace ConsoleApp1
                     Console.WriteLine($"Произошла ошибка: {ex.Message}");
                 }
             }
+        }
 
-                Console.WriteLine("Программа завершена.");
+
+        static void SaveDrones(Drone[] drones, string fileName)
+        {
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string jsonString = JsonSerializer.Serialize(drones, options);
+            File.WriteAllText(fileName, jsonString);
+            Console.WriteLine($"Состояние сохранено в файл {fileName}");
+        }
+
+        static Drone[] LoadDrones(string fileName)
+        {
+            if (!File.Exists(fileName))
+            {
+                Console.WriteLine("Файл не найден. Будет создан новый массив.");
+                return Array.Empty<Drone>();
+            }
+
+            string jsonString = File.ReadAllText(fileName);
+            Drone[]? drones = JsonSerializer.Deserialize<Drone[]>(jsonString);
+            Console.WriteLine("Состояние успешно загружено из файла.");
+            return drones ?? Array.Empty<Drone>();
+        }
+
+        static int SelectDroneIndex(Drone[] drones)
+        {
+            if (drones.Length == 0)
+            {
+                Console.WriteLine("Список дронов пуст.");
+                return -1;
+            }
+
+            Console.Write($"Введите индекс дрона (от 0 до {drones.Length - 1}): ");
+            if (int.TryParse(Console.ReadLine(), out int index) && index >= 0 && index < drones.Length)
+            {
+                return index;
+            }
+
+            Console.WriteLine("Ошибка: некорректный индекс дрона.");
+            return -1;
         }
     }
 }
+
