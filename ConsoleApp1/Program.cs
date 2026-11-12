@@ -21,6 +21,13 @@ namespace ConsoleApp1
             foreach (Drone drone in drones)
             {
                 drone.PrintInfo();
+                if (drone.IsEngineOn)
+                {
+                    Console.WriteLine($"Оставшееся время полёта: {drone.CalculateFlightTime()} мин.");
+                }
+
+
+
 
                 // Проверка заряда (Задание 1, пункт 4)
                 if (drone.BatteryLevel < 20)
