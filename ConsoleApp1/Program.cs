@@ -6,7 +6,11 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("--- Система управления БПЛА (версия 2.0) ---");
+
+            Console.WriteLine("******************************************");
+            Console.WriteLine("*** Система управления БПЛА (версия 1.0) ***");
+            Console.WriteLine("******************************************");
+
 
             // Задание 1 & 3: Массив объектов и использование разных конструкторов
             Drone[] drones = new Drone[]
