@@ -40,29 +40,40 @@ namespace ConsoleApp1
                 Drone myDrone = drones[0];
                 Console.WriteLine($"\n--- Управление выбранным дроном [{myDrone.Model}] ---");
 
-                int command = -1;
-                while (command != 0)
+                try
                 {
-                    Console.Write("Введите команду (1 - взлет, 0 - выход): ");
-                    if (int.TryParse(Console.ReadLine(), out command))
+                    int command = -1;
+                    while (command != 0)
                     {
+                        Console.Write("Введите команду (1 - взлет, 2 - расчёт времени, 0 - выход): ");
+                        string input = Console.ReadLine();
+                        if (!int.TryParse(input, out command))
+                        {
+                            Console.WriteLine("Ошибка: введите число.");
+                            continue;
+                        }
+
                         if (command == 1)
                         {
                             myDrone.TakeOff();
+                        }
+                        else if (command == 2)
+                        {
+                            Console.WriteLine($"Время полёта: {myDrone.CalculateFlightTime()} мин.");
                         }
                         else if (command != 0)
                         {
                             Console.WriteLine("Неизвестная команда.");
                         }
                     }
-                    else
-                    {
-                        Console.WriteLine("Ошибка ввода числа.");
-                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Произошла ошибка: {ex.Message}");
                 }
             }
 
-            Console.WriteLine("Программа завершена.");
+                Console.WriteLine("Программа завершена.");
         }
     }
 }
